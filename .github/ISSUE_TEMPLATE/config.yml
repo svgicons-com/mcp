@@ -1,0 +1,17 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Svg/icons MCP developer page
+    url: https://svgicons.com/developers/mcp
+    about: Hosted MCP endpoint overview.
+  - name: MCP server docs
+    url: https://svgicons.com/docs/mcp-server
+    about: Hosted MCP documentation and tool overview.
+  - name: ChatGPT and Codex setup
+    url: https://svgicons.com/docs/chatgpt-codex-mcp-setup
+    about: Setup documentation for supported AI coding clients.
+  - name: Svg/icons REST API repo
+    url: https://github.com/svgicons-com/api
+    about: REST API, OpenAPI, SDK, and direct integration docs.
+  - name: Svg/icons CLI repo
+    url: https://github.com/svgicons-com/cli
+    about: Terminal and export automation docs.

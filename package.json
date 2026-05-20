@@ -1,0 +1,21 @@
+{
+  "name": "svgicons-mcp-github",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hosted MCP setup, prompts, examples, and AI coding workflows for svgicons.com.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/svgicons-com/mcp.git"
+  },
+  "scripts": {
+    "validate": "npm run check:secrets && npm run check:docs && npm run validate:scaffold",
+    "validate:scaffold": "node scripts/validate-scaffold.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:docs": "node scripts/check-docs.mjs"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}

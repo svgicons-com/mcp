@@ -1,0 +1,40 @@
+name: MCP feedback
+description: Share feedback on hosted Svg/icons MCP docs, tools, setup, prompts, or examples.
+title: "[MCP feedback]: "
+labels:
+  - feedback
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Docs
+        - Tool reference
+        - Client setup
+        - Prompts
+        - Examples
+        - Use cases
+        - Security guidance
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Feedback
+      description: Describe the issue, suggestion, or missing guidance.
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      description: Optional. Include the client if this is setup-related.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I did not include real tokens, private credentials, or private project data.
+          required: true

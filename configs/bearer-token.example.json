@@ -1,0 +1,8 @@
+{
+  "name": "svgicons",
+  "url": "https://svgicons.com/mcp",
+  "transport": "http",
+  "headers": {
+    "Authorization": "Bearer YOUR_TOKEN"
+  }
+}

@@ -1,0 +1,50 @@
+name: Config help
+description: Ask for help connecting a client to the hosted Svg/icons MCP endpoint.
+title: "[Config help]: "
+labels:
+  - config
+body:
+  - type: input
+    id: client
+    attributes:
+      label: Client
+      placeholder: ChatGPT, Codex, Cursor, Claude, VS Code, or other
+    validations:
+      required: true
+  - type: dropdown
+    id: setup_type
+    attributes:
+      label: Setup type
+      options:
+        - OAuth
+        - Bearer token
+        - Anonymous metadata-only access
+        - Remote HTTP MCP
+        - Local bridge
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error or symptom
+      description: What happened when connecting to https://svgicons.com/mcp?
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config snippet without secrets
+      description: Optional. Replace tokens with YOUR_TOKEN before posting.
+  - type: textarea
+    id: docs_tried
+    attributes:
+      label: Docs already tried
+      description: Link or name the docs you checked.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed tokens, cookies, authorization headers, and private credentials.
+          required: true

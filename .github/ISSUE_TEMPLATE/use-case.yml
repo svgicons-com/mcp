@@ -1,0 +1,94 @@
+name: Use case
+description: Share a hosted Svg/icons MCP workflow.
+title: "[Use case]: "
+labels:
+  - use-case
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Use-case name
+      description: Give the workflow a short descriptive name.
+      placeholder: React button icon workflow
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem solved
+      description: What icon workflow problem did this solve?
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      description: Name the client or environment used.
+      placeholder: ChatGPT, Codex, Cursor, Claude, VS Code, or other
+    validations:
+      required: true
+  - type: dropdown
+    id: workflow_type
+    attributes:
+      label: Workflow type
+      options:
+        - AI coding icon search
+        - React component insertion
+        - Dashboard navigation
+        - Design-system review
+        - Project Kit workflow
+        - PNG export workflow
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: tools
+    attributes:
+      label: Tools used
+      options:
+        - label: search_icons
+        - label: search_icon_sets
+        - label: get_icon
+        - label: export_icon_png
+        - label: recommend_icons_for_ui
+        - label: create_icon_kit
+        - label: generate_icon_kit_for_project
+        - label: export_icon_collection
+  - type: textarea
+    id: prompts
+    attributes:
+      label: Prompts used
+      description: Share prompts that are safe to publish. Do not include tokens or private data.
+  - type: input
+    id: stack
+    attributes:
+      label: Stack
+      placeholder: React, TypeScript, Tailwind CSS
+  - type: input
+    id: public_url
+    attributes:
+      label: Public URL, demo, or repo
+      description: Optional. External links may be reviewed, edited, or removed.
+  - type: textarea
+    id: code
+    attributes:
+      label: Code snippet
+      description: Optional. Remove private data and credentials before sharing.
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or GIFs
+      description: Optional. Confirm you have permission to share any attached media.
+  - type: checkboxes
+    id: permission
+    attributes:
+      label: Permissions and safety
+      options:
+        - label: You may feature this use case in the repo.
+        - label: You may feature this use case on svgicons.com with attribution.
+        - label: I confirm I did not include real tokens.
+          required: true
+        - label: I confirm I have permission to share the content.
+          required: true
+        - label: I understand external links may be reviewed, edited, or removed.
+          required: true

@@ -1,0 +1,6 @@
+{
+  "name": "svgicons",
+  "url": "https://svgicons.com/mcp",
+  "transport": "http",
+  "authentication": "oauth"
+}
