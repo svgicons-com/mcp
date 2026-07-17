@@ -16,17 +16,39 @@ The live implementation supports these access patterns:
 - OAuth with Dynamic Client Registration and PKCE where the MCP client supports it.
 - `Authorization: Bearer ...` header tokens for supported developer, Codex, CLI, and remote HTTP MCP clients.
 
-Do not assume every tool or operation is available anonymously. Many useful workflows require authentication, and some tools or workflows may require an svgicons.com account and/or Pro Plan access. Pro/account-gated workflows can include raw SVG access, PNG export, persistent Icon Collections, generated project collections, collection export, or other account features depending on permissions.
+Do not assume every tool or operation is available anonymously. Anonymous access covers metadata search, icon set search, icon metadata lookup, and UI recommendations only. Raw SVG access, PNG export, and every Icon Collection tool (create, generate, list, read, add, remove, export) require a [Pro Plan](https://svgicons.com/pricing) token — via OAuth or a Pro API personal access token — carrying `mcp:use` plus the per-tool scope.
+
+## Token Scopes
+
+Pro API tokens are scoped. Give each MCP client the smallest set it needs:
+
+1. `mcp:use` — required for any authenticated MCP call.
+2. `search:read` — search workflows.
+3. `icons:read` — raw SVG and PNG export inputs.
+4. `collections:read` — listing and reading Icon Collections.
+5. `collections:write` — creating and extending Icon Collections.
+6. `exports:create` — PNG export and Icon Collection export workflows.
+
+OAuth-connected clients receive the access their approval grants; per-tool requirements are listed in [Tools](TOOLS.md).
 
 ## Anonymous Metadata-Only Access
 
-Anonymous requests can use supported metadata workflows such as icon search, icon set search, icon metadata lookup, and UI recommendations. Metadata responses can include fields such as icon IDs, names, dimensions, page URLs, and icon set metadata.
+Anonymous requests can use supported metadata workflows such as icon search, icon set search, icon metadata lookup, and UI recommendations. Metadata responses can include fields such as icon IDs, names, dimensions, page URLs, and icon set metadata. Anonymous calls are rate-limited per method and currently capped at 10 icons per search or recommendation; a Pro token raises the search cap to 50.
 
-Anonymous access does not mean raw SVG, PNG export, persistent Icon Collection creation, generated project collection creation, or collection export access. Check the MCP client response, svgicons.com account permissions, and Pro Plan access for each tool call.
+Anonymous access does not mean raw SVG, PNG export, persistent Icon Collection creation, generated project collection creation, or collection export access. Check the MCP client response, the token's scopes, and Pro Plan access for each tool call.
 
 ## OAuth With Dynamic Client Registration And PKCE
 
 Use OAuth where the MCP client supports it. OAuth keeps long-lived secrets out of prompts and local config files and lets the client manage authorization.
+
+Clients discover the Svg/icons OAuth configuration from:
+
+```text
+https://svgicons.com/.well-known/oauth-protected-resource/mcp
+https://svgicons.com/.well-known/oauth-authorization-server
+```
+
+The flow is authorization code with PKCE, and Dynamic Client Registration means no pre-registered client ID is needed.
 
 At a high level:
 

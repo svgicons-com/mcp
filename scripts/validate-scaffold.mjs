@@ -12,7 +12,22 @@ const liveTools = [
   'recommend_icons_for_ui',
   'create_icon_kit',
   'generate_icon_kit_for_project',
+  'list_icon_collections',
+  'get_icon_collection',
+  'add_icons_to_collection',
+  'remove_icon_from_collection',
   'export_icon_collection'
+];
+
+const documentedVersion = '0.3.0';
+
+const officialScopes = [
+  'mcp:use',
+  'search:read',
+  'icons:read',
+  'collections:read',
+  'collections:write',
+  'exports:create'
 ];
 
 const promptFiles = [
@@ -202,11 +217,13 @@ for (const relativePath of requiredDirs) {
 
 if (existsFile('README.md')) {
   assertIncludes('README.md', 'https://svgicons.com/mcp', 'README must include endpoint https://svgicons.com/mcp');
-  assertIncludes('README.md', '0.1.0', 'README must include version 0.1.0');
-  assertPattern('README.md', /svgicons\.com\s+is\s+a\s+developer-focused\s+SVG\s+icon\s+platform/i, 'README must introduce svgicons.com');
-  assertIncludes('README.md', 'Authentication and Pro Plan access', 'README must include Authentication and Pro Plan access section');
-  assertPattern('README.md', /workflows\s+require\s+authentication/i, 'README must mention some MCP workflows may require authentication');
-  assertPattern('README.md', /svgicons\.com\s+account\s+and\/or\s+Pro\s+Plan/i, 'README must mention svgicons.com account and/or Pro Plan access');
+  assertIncludes('README.md', documentedVersion, `README must include version ${documentedVersion}`);
+  assertPattern('README.md', /320K\+\s+open-source\s+SVG\s+icons/i, 'README must introduce svgicons.com with the 320K+ open-source SVG icons figure');
+  assertIncludes('README.md', 'Access Tiers And Authentication', 'README must include the Access Tiers And Authentication section');
+  assertPattern('README.md', /Anonymous\s+\(no\s+account\)/i, 'README must describe the anonymous metadata tier');
+  assertPattern('README.md', /Pro\s+API\s+token/i, 'README must describe Pro API token auth');
+  assertIncludes('README.md', 'https://svgicons.com/pricing', 'README must link to pricing where the Pro Plan comes up');
+  assertIncludes('README.md', 'com.svgicons/mcp', 'README must document the Official MCP Registry name');
   assertPattern('README.md', /hosted\s+.*MCP/i, 'README must mention hosted MCP');
   assertPattern('README.md', /JSON-RPC/i, 'README must mention JSON-RPC');
   assertPattern('README.md', /OAuth/i, 'README must mention OAuth');
@@ -248,8 +265,8 @@ if (existsFile('docs/TROUBLESHOOTING.md') && read('docs/TROUBLESHOOTING.md').tri
 
 if (existsFile('package.json')) {
   const packageJson = JSON.parse(read('package.json'));
-  if (packageJson.version !== '0.1.0') {
-    fail('package.json version must be 0.1.0');
+  if (packageJson.version !== documentedVersion) {
+    fail(`package.json version must be ${documentedVersion}`);
   }
   if (packageJson.private !== true) {
     fail('package.json must be private');
@@ -454,8 +471,22 @@ for (const relativePath of publicFiles) {
   lineFailures(relativePath, /\ball\s+tools\s+are\s+anonymous\b/i, 'Found all-tools-anonymous claim');
   lineFailures(relativePath, /\bfree\s+API\b|\bunauthenticated\s+icon\s+API\b|\bpublic\s+icon\s+REST\s+API\b/i, 'Found unsupported free or unauthenticated icon API claim');
   lineFailures(relativePath, /\blegal\s+compliance\b/i, 'Found legal compliance claim');
-  lineFailures(relativePath, /\brate\s+limits?\b/i, 'Found rate-limit wording outside a fake-claim warning', (line) => /fake|do\s+not\s+invent|unsupported|no\s+fake/i.test(line));
-  lineFailures(relativePath, /\btoken\s+scopes?\b/i, 'Found token-scope wording outside a fake-claim warning', (line) => /fake|do\s+not\s+invent|unsupported|no\s+fake/i.test(line));
+  lineFailures(
+    relativePath,
+    /\b\d+\s*(?:requests?\s*)?(?:per|\/)\s*(?:second|minute|hour|day)\b/i,
+    'Found a numeric rate-limit contract that is not publicly documented'
+  );
+
+  // Scope names are official public docs now (svgicons.com/docs/mcp-server);
+  // only guard against inventing scopes that do not exist.
+  const scopeLines = read(relativePath).split(/\r?\n/);
+  scopeLines.forEach((line, index) => {
+    for (const match of line.matchAll(/\b[a-z][a-z-]*:(?:use|read|write|create|delete|admin)\b/g)) {
+      if (!officialScopes.includes(match[0])) {
+        fail(`Found a scope that is not an official Pro API scope (${match[0]}): ${relativePath}:${index + 1}`);
+      }
+    }
+  });
 }
 
 const scanned = publicFiles.length;

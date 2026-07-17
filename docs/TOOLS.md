@@ -1,6 +1,6 @@
 # Tools
 
-The hosted svgicons.com MCP endpoint exposes exactly eight live tools. Tool schemas are provided by the MCP server during `tools/list` discovery. The field notes below are verified from the website implementation and public docs.
+The hosted svgicons.com MCP endpoint exposes exactly 12 live tools. Tool schemas are provided by the MCP server during `tools/list` discovery. The field notes below are verified from the website implementation and public docs.
 
 Endpoint:
 
@@ -16,9 +16,9 @@ Every tool result uses MCP tool-call response fields:
 
 ## Access Summary
 
-- Anonymous metadata-only access is supported for supported metadata workflows.
-- Authenticated account and/or Pro Plan access may be required where the requested operation returns raw SVG, creates or exports assets, or persists Icon Collections.
-- If a client rejects a tool call, check the MCP client response, svgicons.com account permissions, and Pro Plan access.
+- Anonymous metadata-only access covers `search_icons`, `search_icon_sets`, `get_icon`, and `recommend_icons_for_ui`. Anonymous calls are rate-limited per method and currently capped at 10 icons per search or recommendation.
+- Every other tool — and raw SVG anywhere — requires a Pro token (OAuth or a Pro API personal access token) carrying `mcp:use` plus the per-tool scope listed below: `icons:read`, `collections:read`, `collections:write`, or `exports:create`.
+- If a client rejects a tool call, check the MCP client response, the token's scopes, and Pro Plan access.
 
 ## `search_icons`
 
@@ -28,7 +28,7 @@ Purpose: Search icon metadata by query, category, or icon set prefix.
 
 Typical use case: Find candidate icons for a button, navigation item, dashboard, onboarding step, or empty state.
 
-Authentication expectation: Anonymous metadata-only search is supported. `includeSvg` may require authenticated account and/or Pro Plan access with raw SVG permission.
+Authentication expectation: Anonymous metadata-only search is supported (currently capped at 10 icons per search; a Pro token raises the cap to 50). `includeSvg` requires a Pro token with `mcp:use` and `icons:read`.
 
 Verified input fields:
 
@@ -87,7 +87,7 @@ Purpose: Fetch one icon by ID.
 
 Typical use case: Inspect an icon selected from search results and optionally request raw SVG when authorized.
 
-Authentication expectation: Metadata is public. Raw SVG may require authenticated account and/or Pro Plan access.
+Authentication expectation: Metadata is public. Raw SVG requires a Pro token with `mcp:use` and `icons:read`.
 
 Verified input fields:
 
@@ -116,7 +116,7 @@ Purpose: Render one icon as a PNG file or a ZIP of PNG variants.
 
 Typical use case: Prepare a PNG asset for a design handoff, documentation screenshot, or non-SVG integration.
 
-Authentication expectation: Requires authenticated account and/or Pro Plan access with icon-read and export permission.
+Authentication expectation: Requires a Pro token with `mcp:use`, `icons:read`, and `exports:create`.
 
 Verified input fields:
 
@@ -190,7 +190,7 @@ Purpose: Create a persistent Icon Collection and optionally add selected icon ID
 
 Typical use case: Save reviewed icon choices as a reusable collection for later export.
 
-Authentication expectation: Requires authenticated account and/or Pro Plan access with collection-write permission.
+Authentication expectation: Requires a Pro token with `mcp:use` and `collections:write`.
 
 Verified input fields:
 
@@ -221,7 +221,7 @@ Purpose: Generate and persist an Icon Collection from a project brief, screens, 
 
 Typical use case: Create a starting collection for a new application area that a developer will review before exporting.
 
-Authentication expectation: Requires authenticated account and/or Pro Plan access with collection-write permission.
+Authentication expectation: Requires a Pro token with `mcp:use` and `collections:write`.
 
 Verified input fields:
 
@@ -250,6 +250,115 @@ Safe example prompt:
 Generate an Icon Collection for a project with dashboard, billing, user management, security, notifications, and settings screens.
 ```
 
+## `list_icon_collections`
+
+Status: Live
+
+Purpose: List your persistent Icon Collections with icon counts, an optional name/slug filter, and pagination.
+
+Typical use case: Discover a `collectionId` before reading, extending, or exporting a collection — including collections created in earlier sessions or on the website.
+
+Authentication expectation: Requires a Pro token with `mcp:use` and `collections:read`.
+
+Verified input fields:
+
+- `query` string, optional name/slug filter
+- `limit` integer, up to 50
+- `page` integer
+
+Verified output shape:
+
+- `structuredContent.data[]`: collection summaries with `id`, `name`, `slug`, `iconsCount`, and `styledWith`
+- `structuredContent.meta`: query, page, per-page count, total, last page, and access label
+
+Safe example prompt:
+
+```text
+List my Icon Collections and tell me which ones already cover dashboard navigation.
+```
+
+## `get_icon_collection`
+
+Status: Live
+
+Purpose: Read one Icon Collection with its paginated entries.
+
+Typical use case: Review what a collection already contains — including custom-styled entries created on the website — before deciding what to add or export.
+
+Authentication expectation: Requires a Pro token with `mcp:use` and `collections:read`.
+
+Verified input fields:
+
+- `collectionId` integer, required
+- `page` integer
+- `perPage` integer, up to 100
+
+Verified output shape:
+
+- `structuredContent.collection`: collection detail, including `styledWith` and `hasCustomIcons`
+- `structuredContent.icons`: paginated entries; each entry includes `entryId` (the entry row id), and custom-icon entries include `customEditId`, `customName`, and their customized SVG snapshot as the `body` — exactly what the website and Pro API show
+
+Safe example prompt:
+
+```text
+Show me what is in my Billing UI collection and flag any icons that do not fit the outline style.
+```
+
+## `add_icons_to_collection`
+
+Status: Live
+
+Purpose: Add catalog icons to an existing Icon Collection as plain entries.
+
+Typical use case: Extend a collection across sessions after reviewing new search results.
+
+Authentication expectation: Requires a Pro token with `mcp:use` and `collections:write`.
+
+Verified input fields:
+
+- `collectionId` integer, required
+- `iconIds` integer array, required, up to 200 per call
+
+Verified output shape:
+
+- `structuredContent.addedIcons`: how many entries were actually created — adding is idempotent and icons already in the collection are skipped
+- `structuredContent.meta.access`
+
+Safe example prompt:
+
+```text
+Add the reviewed invoice, receipt, and refund icons to my Billing UI collection.
+```
+
+## `remove_icon_from_collection`
+
+Status: Live
+
+Purpose: Remove an icon from an Icon Collection.
+
+Typical use case: Curate a collection without a website round-trip.
+
+Authentication expectation: Requires a Pro token with `mcp:use` and `collections:write`.
+
+Verified input fields:
+
+- `collectionId` integer, required
+- `iconId` integer, required
+- `allVariants` boolean, default `false`
+
+Verified output shape:
+
+- `structuredContent`: removal result and updated collection metadata
+- `structuredContent.meta.access`
+
+The tool is entry-precise by default: only the plain entry is removed and custom-icon variants of the same icon survive, matching the website behavior. Pass `allVariants: true` to remove every entry of the icon. Note the Pro REST API's `DELETE .../icons/{icon}` defaults the other way (`all_variants: true`) for backward compatibility.
+
+Safe example prompt:
+
+```text
+Remove the duplicate settings icon from my Dashboard collection but keep the styled variant.
+```
+
 ## `export_icon_collection`
 
 Status: Live
@@ -258,7 +367,7 @@ Purpose: Queue an Icon Collection export.
 
 Typical use case: Export a reviewed collection as SVG folders, sprites, manifests, framework components, PNG packs, Iconify JSON, Storybook galleries, or package scaffolds.
 
-Authentication expectation: Requires authenticated account and/or Pro Plan access with export permission.
+Authentication expectation: Requires a Pro token with `mcp:use` and `exports:create`.
 
 Verified input fields:
 
@@ -299,6 +408,11 @@ Verified output shape:
 - `structuredContent.meta.access`
 - `structuredContent.meta.note`
 
+Export behavior notes:
+
+- Custom-icon entries export their customized snapshot under a unique derived filename — the customization is kept, not replaced by the catalog icon.
+- When `colorPolicy` is omitted, collections that carry styling (an applied style or custom-icon entries) default to `preserve` so exported files keep the customization's colors; plain collections keep the `currentColor` default. An explicit `colorPolicy` always wins.
+
 Safe example prompt:
 
 ```text
@@ -326,6 +440,10 @@ The following are not documented as live Svg/icons MCP surfaces in this repo:
 | `recommend_icons_for_ui` | [Dashboard navigation](../prompts/dashboard-navigation.md), [Design-system icon review](../prompts/design-system-icon-review.md), [Project Kit workflow](../prompts/project-kit-workflow.md) |
 | `create_icon_kit` | [Dashboard navigation](../prompts/dashboard-navigation.md), [Design-system icon review](../prompts/design-system-icon-review.md), [Project Kit workflow](../prompts/project-kit-workflow.md) |
 | `generate_icon_kit_for_project` | [Dashboard navigation](../prompts/dashboard-navigation.md), [Project Kit workflow](../prompts/project-kit-workflow.md) |
+| `list_icon_collections` | [Project Kit workflow](../prompts/project-kit-workflow.md) |
+| `get_icon_collection` | [Project Kit workflow](../prompts/project-kit-workflow.md), [Design-system icon review](../prompts/design-system-icon-review.md) |
+| `add_icons_to_collection` | [Project Kit workflow](../prompts/project-kit-workflow.md), [Dashboard navigation](../prompts/dashboard-navigation.md) |
+| `remove_icon_from_collection` | [Project Kit workflow](../prompts/project-kit-workflow.md) |
 | `export_icon_collection` | [Project Kit workflow](../prompts/project-kit-workflow.md) |
 
 ## Related Links

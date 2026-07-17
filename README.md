@@ -1,8 +1,8 @@
 # Svg/icons MCP
 
-svgicons.com is a developer-focused SVG icon platform for searching icons, inspecting icon metadata, exploring icon sets, building icon workflows, and integrating icons into design systems, frontend projects, and AI-assisted coding workflows.
+The Svg/icons MCP server connects AI coding tools to [svgicons.com](https://svgicons.com), a catalog of 320K+ open-source SVG icons. Assistants can search icons and icon sets, fetch icon metadata, and get icon recommendations for a UI without any account. With a Pro account (OAuth or a scoped API token), they can also fetch raw SVG markup, render PNG exports, and create, read, extend, and export persistent Icon Collections — including custom-styled icons — so the icon-discovery step never leaves the development workflow.
 
-Svg/icons MCP helps MCP-compatible AI coding tools search icons, inspect icon sets, recommend icon choices, export assets, and prepare Icon Collection workflows through the hosted svgicons.com MCP endpoint.
+The server is hosted, remote MCP over Streamable HTTP (JSON-RPC requests via HTTP `POST`). There is no local install and no local Svg/icons MCP server package.
 
 Endpoint:
 
@@ -10,74 +10,247 @@ Endpoint:
 https://svgicons.com/mcp
 ```
 
-Version: `0.1.0`
+Current MCP server version: `0.3.0` (protocol `2025-06-18`).
 
-This repository documents hosted MCP workflows for svgicons.com. The endpoint is remote MCP over HTTP JSON-RPC, separate from the Svg/icons REST API, and not OpenAPI. This repo does not provide a local stdio server or a local Svg/icons MCP server package.
+Official MCP Registry name: `com.svgicons/mcp` — see [Official MCP Registry listing](#official-mcp-registry-listing).
 
 ## What This Repo Contains
 
-- Hosted MCP endpoint setup
-- Client configuration guidance
+This repository documents the hosted MCP endpoint. It contains no server code.
+
+- Client connection instructions and reference configs
 - Live tool reference
-- Prompting guidance
+- Authentication and scope guidance
+- Prompting guidance and a prompt library
 - Example workflow documentation
-- Security guidance
-- Troubleshooting
+- Security guidance and troubleshooting
 - Relationship to the REST API and CLI repos
 - Community use case templates
 
-## Authentication and Pro Plan access
-
-The hosted endpoint supports these access patterns:
-
-- Anonymous metadata-only access for limited discovery and metadata workflows.
-- OAuth with Dynamic Client Registration and PKCE where the MCP client supports it.
-- `Authorization: Bearer ...` header tokens for supported developer, CLI, and Codex-style clients.
-
-Do not assume every tool is available anonymously. Many useful workflows require authentication, and some tools or workflows may require an svgicons.com account and/or Pro Plan access. Pro/account-gated workflows can include PNG export, icon kit creation, generated project icon kits, icon collection export, raw SVG access, or other account features depending on permissions.
-
-Do not paste tokens into prompts, issues, screenshots, commits, or public repos. If access is denied, check authentication, account permissions, and Pro Plan access.
-
-See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).
+The live product docs are the source of truth: [MCP server docs](https://svgicons.com/docs/mcp-server) and the [MCP developer overview](https://svgicons.com/developers/mcp).
 
 ## Live MCP Tools
 
-The hosted endpoint exposes exactly these live MCP tools:
+The hosted endpoint exposes exactly these 12 live tools.
 
-- `search_icons`
-- `search_icon_sets`
-- `get_icon`
-- `export_icon_png`
-- `recommend_icons_for_ui`
-- `create_icon_kit`
-- `generate_icon_kit_for_project`
-- `export_icon_collection`
+**Search and read** (anonymous metadata; raw SVG with Pro):
 
-See [docs/TOOLS.md](docs/TOOLS.md) for verified input fields, output notes, access expectations, and safe prompt examples.
+- `search_icons` — search icon metadata by query, category, or icon set prefix; add `includeSvg` for raw SVG with a Pro token.
+- `search_icon_sets` — search icon sets by name, prefix, author, category, or description to pick a consistent visual family.
+- `get_icon` — fetch one icon by ID; metadata is public, raw SVG requires a Pro token.
 
-## Client Setup
+**Recommendations** (anonymous):
 
-Use `https://svgicons.com/mcp` when your client supports hosted remote MCP over HTTP JSON-RPC.
+- `recommend_icons_for_ui` — describe a UI or screen and receive icon candidates with short rationales.
 
-For ChatGPT and Codex-style setup, use OAuth where supported or a private bearer-token configuration where the client supports it. The current svgicons.com setup docs are the source of truth for client-specific steps:
+**Icon Collections — create, read, extend** (Pro):
 
-- <https://svgicons.com/docs/chatgpt-codex-mcp-setup>
-- <https://svgicons.com/docs/mcp-server>
+- `create_icon_kit` — create a persistent Icon Collection and optionally seed it with icon IDs.
+- `generate_icon_kit_for_project` — generate an Icon Collection from a project brief, screen list, or required concepts.
+- `list_icon_collections` — list your Icon Collections with icon counts, an optional name/slug filter, and pagination.
+- `get_icon_collection` — read one collection with paginated entries, including custom-icon entries and their customized SVG bodies.
+- `add_icons_to_collection` — add catalog icons to an existing collection; idempotent, already-present icons are skipped.
+- `remove_icon_from_collection` — remove an icon from a collection; entry-precise by default, pass `allVariants: true` to remove every entry of the icon.
 
-Config and setup docs:
+**Exports** (Pro):
 
-- [Config index](configs/README.md)
-- [ChatGPT and Codex setup](configs/chatgpt-codex.md)
-- [Codex example](configs/codex.example.md)
-- [Client setup overview](docs/CLIENTS.md)
-- [Authentication](docs/AUTHENTICATION.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- `export_icon_png` — render one icon as a PNG file or a ZIP of PNG variants, returned as a JSON-safe base64 payload.
+- `export_icon_collection` — queue an Icon Collection export: SVG folders, SVG sprites, React/Vue/Svelte/Solid/Blade components, Storybook galleries, npm package scaffolds, PNG packs, Iconify JSON, and JSON/license manifests.
 
-## Prompt Library
+See [docs/TOOLS.md](docs/TOOLS.md) for verified input fields, output notes, access requirements, and safe prompt examples.
 
-The [prompt library](prompts/README.md) includes copyable workflows for search, React components, dashboard navigation, emoji replacement, accessibility review, themeable icons, design-system review, Icon Collections, and PNG export.
+### Export behavior worth knowing
 
-Start with [search icons](prompts/search-icons.md), then move to code or export prompts only after reviewing the tool calls and selected icons.
+- Custom-icon entries in a collection export their customized snapshot under a unique derived filename — the customization is kept, not replaced by the catalog icon.
+- When you do not pass `colorPolicy`, collections that carry styling (an applied style or custom-icon entries) default to `preserve`, so exported files keep the colors the customization defined. Plain collections keep the `currentColor` default. An explicit `colorPolicy` always wins.
+- Use `formats: ["png"]` as a shorthand for `png-pack`.
+
+## Access Tiers And Authentication
+
+**Anonymous (no account):** metadata-only access to `search_icons`, `search_icon_sets`, `get_icon`, and `recommend_icons_for_ui`. Anonymous requests are rate-limited per method and currently capped at 10 icons per search or recommendation. Raw SVG, PNG export, and all Icon Collection tools are not available anonymously.
+
+**Pro:** authenticate with either of:
+
+- **OAuth 2.0** — authorization code with PKCE and Dynamic Client Registration. Clients discover the configuration at `https://svgicons.com/.well-known/oauth-authorization-server` (resource metadata at `/.well-known/oauth-protected-resource/mcp`), register dynamically, and send you to svgicons.com to sign in and approve access.
+- **Pro API token** — a scoped personal access token created from your account page, sent as `Authorization: Bearer YOUR_API_TOKEN` in clients that support private headers.
+
+Pro raises search caps (up to 50 icons per search) and unlocks raw SVG, PNG export, and the Icon Collection and export tools.
+
+Token scopes — give each client the smallest set it needs:
+
+| Scope | Unlocks |
+| --- | --- |
+| `mcp:use` | Required for any authenticated MCP call. |
+| `search:read` | Search workflows. |
+| `icons:read` | Raw SVG and PNG export inputs. |
+| `collections:read` | Listing and reading Icon Collections. |
+| `collections:write` | Creating and extending Icon Collections. |
+| `exports:create` | PNG export and Icon Collection export workflows. |
+
+The Pro Plan is €6/$7 per month or €69/$79 lifetime — see [pricing](https://svgicons.com/pricing). On the website, Icon Collections are also available to free Member accounts through a one-time trial allowance of 15 Pro credits; MCP and API access always require a Pro token.
+
+See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) and the [MCP server docs](https://svgicons.com/docs/mcp-server).
+
+## Connect Your Client
+
+### Claude Code
+
+```bash
+claude mcp add --transport http svgicons https://svgicons.com/mcp
+```
+
+Then run `/mcp` inside Claude Code to complete the OAuth sign-in. To use a Pro API token instead:
+
+```bash
+claude mcp add --transport http svgicons https://svgicons.com/mcp \
+  --header "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+### Claude.ai and Claude Desktop (custom connector)
+
+1. Open **Customize → Connectors** and click **Add custom connector**.
+2. Enter `https://svgicons.com/mcp` and click **Add**.
+3. Complete the OAuth prompt to sign in to svgicons.com (Dynamic Client Registration — no client ID needed).
+4. Enable the connector per conversation from the **+** menu → **Connectors**.
+
+Team/Enterprise owners add it under **Organization settings → Connectors → Add → Custom → Web**; members then connect individually.
+
+### Cursor
+
+Project `.cursor/mcp.json` or global `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "url": "https://svgicons.com/mcp"
+    }
+  }
+}
+```
+
+Omit `headers` to use Cursor's OAuth flow, or add a token:
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "url": "https://svgicons.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+`~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "serverUrl": "https://svgicons.com/mcp"
+    }
+  }
+}
+```
+
+Omit `headers` for OAuth, or reference an environment variable:
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "serverUrl": "https://svgicons.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:SVGICONS_API_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+### VS Code (GitHub Copilot agent mode)
+
+Workspace `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "svgicons": {
+      "type": "http",
+      "url": "https://svgicons.com/mcp"
+    }
+  }
+}
+```
+
+### ChatGPT and Codex
+
+ChatGPT authenticates through OAuth with Dynamic Client Registration; Codex-style clients can use a bearer token. Follow the website guide: [Use MCP with ChatGPT and Codex](https://svgicons.com/docs/chatgpt-codex-mcp-setup), plus [configs/chatgpt-codex.md](configs/chatgpt-codex.md) and [configs/codex.example.md](configs/codex.example.md).
+
+### Other clients
+
+Clients that support remote HTTP MCP servers can connect with the generic shape:
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "type": "http",
+      "url": "https://svgicons.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+Clients that only launch local command-based MCP servers can bridge with `mcp-remote`:
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://svgicons.com/mcp",
+        "--header",
+        "Authorization: Bearer ${SVGICONS_API_TOKEN}"
+      ],
+      "env": {
+        "SVGICONS_API_TOKEN": "YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+More client guidance: [docs/CLIENTS.md](docs/CLIENTS.md) and [configs/README.md](configs/README.md).
+
+## Official MCP Registry Listing
+
+The server is published in the [Official MCP Registry](https://registry.modelcontextprotocol.io) as `com.svgicons/mcp`. Verify the live listing:
+
+```bash
+curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=com.svgicons"
+```
+
+Directories that ingest the official registry (such as PulseMCP) pick the listing up automatically.
+
+## Example Agent Prompts
+
+1. "Find me a minimal lock icon that works at 16px and add it to my app's Icon Collection."
+2. "Recommend icons for a billing settings page — I need payment method, invoice, and refund concepts — then create a collection called 'Billing UI' with the best ones."
+3. "Export my 'Dashboard' collection as React TypeScript components with a 20px default size and download the PNG pack at 2x density."
+
+The [prompt library](prompts/README.md) includes copyable workflows for search, React components, dashboard navigation, emoji replacement, accessibility review, themeable icons, design-system review, Icon Collections, and PNG export. Start with [search icons](prompts/search-icons.md), then move to code or export prompts only after reviewing the tool calls and selected icons.
 
 ## Examples And Use Cases
 
@@ -120,6 +293,7 @@ See [docs/API_RELATIONSHIP.md](docs/API_RELATIONSHIP.md).
 - Do not paste tokens into public prompts, issues, screenshots, commits, or repos.
 - Use OAuth where supported by the MCP client.
 - Use bearer tokens only in supported clients and keep them private.
+- Give every client the smallest scope set it needs and revoke unused tokens.
 - Review tool calls before approval.
 - Review AI-generated SVG and code before committing.
 - Treat SVG insertion as code and content insertion.

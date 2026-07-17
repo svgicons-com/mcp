@@ -21,6 +21,81 @@ The endpoint is hosted remote MCP over HTTP JSON-RPC. It is not a local stdio se
 
 Config index: [configs/README.md](../configs/README.md)
 
+## Claude Code
+
+```bash
+claude mcp add --transport http svgicons https://svgicons.com/mcp
+```
+
+Run `/mcp` inside Claude Code afterwards to complete the OAuth sign-in. To use a Pro API token instead of OAuth:
+
+```bash
+claude mcp add --transport http svgicons https://svgicons.com/mcp \
+  --header "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+In JSON configs (`.mcp.json`), a remote server needs `"type": "http"` — a bare `url` entry without a `type` is treated as a configuration error.
+
+## Claude.ai And Claude Desktop
+
+Add the endpoint as a custom connector:
+
+1. Open **Customize → Connectors** and click **Add custom connector**.
+2. Enter `https://svgicons.com/mcp` and click **Add**.
+3. Complete the OAuth prompt to sign in to svgicons.com. Dynamic Client Registration is supported, so no client ID or secret is needed.
+4. Enable the connector per conversation from the **+** menu → **Connectors**.
+
+Team/Enterprise owners add it under **Organization settings → Connectors → Add → Custom → Web**; members then connect individually. Custom connectors use OAuth — bearer-token headers are not offered in this UI.
+
+## Cursor
+
+Project `.cursor/mcp.json` or global `~/.cursor/mcp.json`. The presence of `url` marks the server as remote; no `type` field is needed. Omit `headers` to use Cursor's OAuth flow.
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "url": "https://svgicons.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+## Windsurf
+
+`~/.codeium/windsurf/mcp_config.json`. Remote servers accept `serverUrl` (or `url`); `headers` supports `${env:VAR}` interpolation. Omit `headers` for OAuth.
+
+```json
+{
+  "mcpServers": {
+    "svgicons": {
+      "serverUrl": "https://svgicons.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:SVGICONS_API_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+## VS Code (GitHub Copilot Agent Mode)
+
+Workspace `.vscode/mcp.json` (top-level key is `servers`, not `mcpServers`):
+
+```json
+{
+  "servers": {
+    "svgicons": {
+      "type": "http",
+      "url": "https://svgicons.com/mcp"
+    }
+  }
+}
+```
+
 ## ChatGPT And Codex
 
 ChatGPT and Codex-style clients use the same hosted endpoint, but setup differs by client.

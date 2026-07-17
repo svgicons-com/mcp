@@ -14,7 +14,20 @@ const liveTools = [
   'recommend_icons_for_ui',
   'create_icon_kit',
   'generate_icon_kit_for_project',
+  'list_icon_collections',
+  'get_icon_collection',
+  'add_icons_to_collection',
+  'remove_icon_from_collection',
   'export_icon_collection'
+];
+
+const officialScopes = [
+  'mcp:use',
+  'search:read',
+  'icons:read',
+  'collections:read',
+  'collections:write',
+  'exports:create'
 ];
 
 const promptAndExampleFiles = [
@@ -124,22 +137,42 @@ for (const file of publicFiles) {
   lineFailures(file, /\ball\s+tools\s+are\s+anonymous\b/i, 'Public file claims all tools are anonymous');
   lineFailures(file, /\bfree\s+API\b|\bunauthenticated\s+icon\s+API\b|\bpublic\s+icon\s+REST\s+API\b/i, 'Public file implies an unsupported free or unauthenticated icon API');
   lineFailures(file, /\blegal\s+compliance\b/i, 'Public file claims legal compliance');
-  lineFailures(file, /\brate\s+limits?\b/i, 'Public file mentions rate limits outside a fake-claim warning', (line) => /fake|do\s+not\s+invent|unsupported|no\s+fake/i.test(line));
-  lineFailures(file, /\btoken\s+scopes?\b/i, 'Public file mentions token scopes outside a fake-claim warning', (line) => /fake|do\s+not\s+invent|unsupported|no\s+fake/i.test(line));
+  lineFailures(
+    file,
+    /\b\d+\s*(?:requests?\s*)?(?:per|\/)\s*(?:second|minute|hour|day)\b/i,
+    'Public file states a numeric rate-limit contract that is not publicly documented'
+  );
+
+  // Scope names are official public docs now (svgicons.com/docs/mcp-server);
+  // only guard against inventing scopes that do not exist.
+  if (!file.endsWith('check-docs.mjs')) {
+    read(file).split(/\r?\n/).forEach((line, index) => {
+      for (const match of line.matchAll(/\b[a-z][a-z-]*:(?:use|read|write|create|delete|admin)\b/g)) {
+        if (!officialScopes.includes(match[0])) {
+          fail(`Public file mentions a scope that is not an official Pro API scope (${match[0]}): ${file}:${index + 1}`);
+        }
+      }
+    });
+  }
 }
 
 const readme = exists('README.md') ? read('README.md') : '';
-if (!/svgicons\.com\s+is\s+a\s+developer-focused\s+SVG\s+icon\s+platform/i.test(readme)) {
-  fail('README must introduce svgicons.com');
+if (!/320K\+\s+open-source\s+SVG\s+icons/i.test(readme)) {
+  fail('README must introduce svgicons.com with the 320K+ open-source SVG icons figure');
 }
-if (!readme.includes('Authentication and Pro Plan access')) {
-  fail('README must include Authentication and Pro Plan access section');
+if (!readme.includes('Access Tiers And Authentication')) {
+  fail('README must include the Access Tiers And Authentication section');
 }
-if (!/workflows\s+require\s+authentication/i.test(readme)) {
-  fail('README must mention that some MCP workflows may require authentication');
+if (!/Anonymous\s+\(no\s+account\)/i.test(readme)) {
+  fail('README must describe the anonymous metadata tier');
 }
-if (!/svgicons\.com\s+account\s+and\/or\s+Pro\s+Plan/i.test(readme)) {
-  fail('README must mention svgicons.com account and/or Pro Plan access');
+if (!/Pro\s+API\s+token/i.test(readme) || !readme.includes('https://svgicons.com/pricing')) {
+  fail('README must describe Pro token auth and link to pricing');
+}
+for (const scope of officialScopes) {
+  if (!readme.includes(`\`${scope}\``)) {
+    fail(`README must document the ${scope} scope`);
+  }
 }
 
 for (const link of [
