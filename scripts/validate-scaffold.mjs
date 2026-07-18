@@ -19,7 +19,7 @@ const liveTools = [
   'export_icon_collection'
 ];
 
-const documentedVersion = '0.3.0';
+const documentedVersion = '0.3.2';
 
 const officialScopes = [
   'mcp:use',
@@ -239,6 +239,12 @@ if (existsFile('README.md')) {
 if (existsFile('docs/TOOLS.md')) {
   for (const tool of liveTools) {
     assertIncludes('docs/TOOLS.md', tool, `docs/TOOLS.md must include live tool ${tool}`);
+  }
+
+  // The server declares behavior annotations on every tool (v0.3.1); the tool
+  // reference must document them truthfully rather than omit them.
+  for (const marker of ['`readOnlyHint: true`', '`destructiveHint: true`', '`destructiveHint: false`']) {
+    assertIncludes('docs/TOOLS.md', marker, `docs/TOOLS.md must document tool annotations (missing ${marker})`);
   }
 }
 

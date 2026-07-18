@@ -10,7 +10,7 @@ Endpoint:
 https://svgicons.com/mcp
 ```
 
-Current MCP server version: `0.3.0` (protocol `2025-06-18`).
+Current MCP server version: `0.3.2` (protocol `2025-06-18`).
 
 Official MCP Registry name: `com.svgicons/mcp` — see [Official MCP Registry listing](#official-mcp-registry-listing).
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.2 - 2026-07-18
+
+- Documented MCP server v0.3.2: every tool inputSchema parameter — including nested array-items schemas — now carries a handler-verified description stating units, limits, and defaults.
+- Updated the tool reference's input-field notes with the authoritative constraints and defaults from those schema descriptions.
+
+## 0.3.1 - 2026-07-18
+
+- Documented MCP server v0.3.1: truthful behavior annotations on all 12 tools — `readOnlyHint: true` on the six read tools (`search_icons`, `search_icon_sets`, `get_icon`, `recommend_icons_for_ui`, `list_icon_collections`, `get_icon_collection`), `destructiveHint: true` on `remove_icon_from_collection`, and explicit `destructiveHint: false` on the five plain write tools.
+
 ## 0.3.0 - 2026-07-17
 
 - Updated the repository for MCP server v0.3.0 (protocol `2025-06-18`).

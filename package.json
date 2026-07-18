@@ -1,6 +1,6 @@
 {
   "name": "svgicons-mcp-github",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "private": true,
   "description": "Hosted MCP setup, prompts, examples, and AI coding workflows for svgicons.com.",
   "type": "module",
