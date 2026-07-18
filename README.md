@@ -14,6 +14,8 @@ Current MCP server version: `0.3.0` (protocol `2025-06-18`).
 
 Official MCP Registry name: `com.svgicons/mcp` — see [Official MCP Registry listing](#official-mcp-registry-listing).
 
+[![smithery badge](https://smithery.ai/badge/contact-deyv/svgicons)](https://smithery.ai/servers/contact-deyv/svgicons)
+
 ## What This Repo Contains
 
 This repository documents the hosted MCP endpoint. It contains no server code.
