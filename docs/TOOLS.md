@@ -8,6 +8,8 @@ Endpoint:
 https://svgicons.com/mcp
 ```
 
+Every tool declares MCP behavior annotations verified from the server definitions: `readOnlyHint: true` on the six read tools, `destructiveHint: true` on `remove_icon_from_collection`, and an explicit `destructiveHint: false` on the five plain write tools. They are listed per tool below.
+
 Every tool result uses MCP tool-call response fields:
 
 - `content`: text content containing JSON for clients that display text.
@@ -24,6 +26,8 @@ Every tool result uses MCP tool-call response fields:
 
 Status: Live
 
+Annotations: `readOnlyHint: true` (read-only).
+
 Purpose: Search icon metadata by query, category, or icon set prefix.
 
 Typical use case: Find candidate icons for a button, navigation item, dashboard, onboarding step, or empty state.
@@ -32,12 +36,12 @@ Authentication expectation: Anonymous metadata-only search is supported (current
 
 Verified input fields:
 
-- `query` string, required
-- `category` string
-- `iconSetPrefix` string
-- `limit` integer
-- `offset` integer
-- `includeSvg` boolean
+- `query` string, required — icon search query, such as "arrow left", "settings", or "github"
+- `category` string — optional icon set category, including New
+- `iconSetPrefix` string — optional icon set prefix to limit the search
+- `limit` integer — max results, 1-50; default 10 (20 with a Pro token); capped at 10 anonymous, 20 member, 50 Pro
+- `offset` integer — zero-based result offset for pagination; default 0
+- `includeSvg` boolean — include wrapped SVG markup; requires a Pro token with `icons:read`
 
 Verified output shape:
 
@@ -55,6 +59,8 @@ Search Svg/icons for outline icons that fit a compact settings sidebar. Return i
 
 Status: Live
 
+Annotations: `readOnlyHint: true` (read-only).
+
 Purpose: Search icon sets by name, prefix, author, category, or description.
 
 Typical use case: Choose a consistent icon family before selecting individual icons.
@@ -63,10 +69,10 @@ Authentication expectation: Anonymous metadata-only access is supported.
 
 Verified input fields:
 
-- `query` string
-- `category` string
-- `limit` integer
-- `page` integer
+- `query` string — matched against icon set name, prefix, author, category, and description
+- `category` string — optional category, including New
+- `limit` integer — icon sets per page, 1-50; default 20
+- `page` integer — one-based page number; default 1
 
 Verified output shape:
 
@@ -83,6 +89,8 @@ Find icon sets that would work for a simple analytics dashboard. Prefer sets wit
 
 Status: Live
 
+Annotations: `readOnlyHint: true` (read-only).
+
 Purpose: Fetch one icon by ID.
 
 Typical use case: Inspect an icon selected from search results and optionally request raw SVG when authorized.
@@ -91,9 +99,9 @@ Authentication expectation: Metadata is public. Raw SVG requires a Pro token wit
 
 Verified input fields:
 
-- `id` integer, required
-- `includeSvg` boolean
-- `format` string, `metadata` or `svg`
+- `id` integer, required — the catalog icon ID, as shown in search results and icon page URLs
+- `includeSvg` boolean — include the raw body and wrapped SVG markup; requires a Pro token with `icons:read`; default false
+- `format` string, `metadata` or `svg` — `svg` is an alias for `includeSvg: true`; `metadata` (default) returns metadata only
 
 Verified output shape:
 
@@ -112,6 +120,8 @@ Get metadata for icon ID 123 and explain whether it fits a destructive action bu
 
 Status: Live
 
+Annotations: `readOnlyHint: false`, `destructiveHint: false` (non-destructive write).
+
 Purpose: Render one icon as a PNG file or a ZIP of PNG variants.
 
 Typical use case: Prepare a PNG asset for a design handoff, documentation screenshot, or non-SVG integration.
@@ -120,17 +130,17 @@ Authentication expectation: Requires a Pro token with `mcp:use`, `icons:read`, a
 
 Verified input fields:
 
-- `id` integer, required
-- `iconName` string, required
-- `sizes` integer array
-- `densities` integer array
-- `backgroundType` string
-- `backgroundColor` string
-- `iconColorMode` string
-- `iconColor` string
-- `padding` integer
-- `filename` string
-- `zip` boolean
+- `id` integer, required — the catalog icon ID
+- `iconName` string, required — the icon slug/name from the URL; required to prevent ID-only bulk export
+- `sizes` integer array — canvas sizes in pixels, up to 4 of the allowed values 16, 24, 32, 48, 96, 128, 256, 512, 1024; default `[512]`
+- `densities` integer array — device-pixel-ratio multipliers 1-4, up to 2; default `[1]`
+- `backgroundType` string — `transparent` (default) or `solid`
+- `backgroundColor` string — hex background color used when `backgroundType` is `solid`; default `#ffffff`
+- `iconColorMode` string — `preserve` (default) keeps source colors; `black`, `white`, or `custom` recolor the icon
+- `iconColor` string — hex icon color used when `iconColorMode` is `custom`; default `#000000`
+- `padding` integer — padding around the icon in pixels, 0-256; default 48
+- `filename` string — base filename for the generated file; defaults to the icon name
+- `zip` boolean — return a ZIP of all size and density variants instead of a single PNG; default false
 
 Verified output shape:
 
@@ -155,6 +165,8 @@ Find a download icon and export a 512 px transparent PNG for the best candidate.
 
 Status: Live
 
+Annotations: `readOnlyHint: true` (read-only).
+
 Purpose: Recommend icon candidates for a product screen or UI description.
 
 Typical use case: Ask an assistant to map UI concepts to icon candidates before implementation.
@@ -163,10 +175,10 @@ Authentication expectation: Anonymous metadata-only recommendations are supporte
 
 Verified input fields:
 
-- `uiDescription` string, required
-- `concepts` string array
-- `category` string
-- `limit` integer
+- `uiDescription` string, required — product UI, screen, or feature description
+- `concepts` string array — optional explicit concept keywords, merged with concepts extracted from the description
+- `category` string — optional icon set category filter, including New
+- `limit` integer — max recommendations, 1-30 with a Pro token (1-10 otherwise); default 8
 
 Verified output shape:
 
@@ -186,6 +198,8 @@ Recommend icons for a billing dashboard with invoices, payment methods, usage, a
 
 Status: Live
 
+Annotations: `readOnlyHint: false`, `destructiveHint: false` (non-destructive write).
+
 Purpose: Create a persistent Icon Collection and optionally add selected icon IDs.
 
 Typical use case: Save reviewed icon choices as a reusable collection for later export.
@@ -194,12 +208,12 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `collections
 
 Verified input fields:
 
-- `name` string, required
-- `description` string
-- `iconIds` integer array
-- `framework` string
-- `colorPolicy` string
-- `namingPolicy` string
+- `name` string, required — collection name, up to 120 characters
+- `description` string — optional collection description, up to 600 characters
+- `iconIds` integer array — catalog icon IDs to add at creation; up to 200, duplicates ignored
+- `framework` string — default export framework stored on the collection: `svg` (default), `react-ts`, `vue`, or `sprite`
+- `colorPolicy` string — stored color policy: `currentColor` (default) rewrites fills, `preserve` keeps them, `strip` removes them
+- `namingPolicy` string — file and component naming: `kebab` (default), `pascal`, or `camel`
 
 Verified output shape:
 
@@ -217,6 +231,8 @@ Create an Icon Collection named Billing Settings UI from the reviewed icon IDs f
 
 Status: Live
 
+Annotations: `readOnlyHint: false`, `destructiveHint: false` (non-destructive write).
+
 Purpose: Generate and persist an Icon Collection from a project brief, screens, and required concepts.
 
 Typical use case: Create a starting collection for a new application area that a developer will review before exporting.
@@ -225,15 +241,15 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `collections
 
 Verified input fields:
 
-- `projectName` string
-- `projectDescription` string, required
-- `screens` string array
-- `requiredConcepts` string array
-- `category` string
-- `maxIcons` integer
-- `framework` string
-- `colorPolicy` string
-- `namingPolicy` string
+- `projectName` string — optional collection name; derived from the description when omitted
+- `projectDescription` string, required — project brief used to extract icon concepts, up to 1500 characters
+- `screens` string array — optional screen or page names that contribute extra concepts
+- `requiredConcepts` string array — concepts that must be searched, merged with concepts extracted from the brief
+- `category` string — optional icon set category filter, including New
+- `maxIcons` integer — maximum icons in the generated collection, 1-64; default 16
+- `framework` string — default export framework stored on the collection: `svg` (default), `react-ts`, `vue`, or `sprite`
+- `colorPolicy` string — stored color policy: `currentColor` (default) rewrites fills, `preserve` keeps them, `strip` removes them
+- `namingPolicy` string — file and component naming: `kebab` (default), `pascal`, or `camel`
 
 Verified output shape:
 
@@ -254,6 +270,8 @@ Generate an Icon Collection for a project with dashboard, billing, user manageme
 
 Status: Live
 
+Annotations: `readOnlyHint: true` (read-only).
+
 Purpose: List your persistent Icon Collections with icon counts, an optional name/slug filter, and pagination.
 
 Typical use case: Discover a `collectionId` before reading, extending, or exporting a collection — including collections created in earlier sessions or on the website.
@@ -262,9 +280,9 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `collections
 
 Verified input fields:
 
-- `query` string, optional name/slug filter
-- `limit` integer, up to 50
-- `page` integer
+- `query` string — optional name or slug filter
+- `limit` integer — collections per page, 1-50; default 20
+- `page` integer — one-based page number; default 1
 
 Verified output shape:
 
@@ -281,6 +299,8 @@ List my Icon Collections and tell me which ones already cover dashboard navigati
 
 Status: Live
 
+Annotations: `readOnlyHint: true` (read-only).
+
 Purpose: Read one Icon Collection with its paginated entries.
 
 Typical use case: Review what a collection already contains — including custom-styled entries created on the website — before deciding what to add or export.
@@ -289,9 +309,9 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `collections
 
 Verified input fields:
 
-- `collectionId` integer, required
-- `page` integer
-- `perPage` integer, up to 100
+- `collectionId` integer or numeric string, required — numeric ID of the collection
+- `page` integer — one-based page number; default 1
+- `perPage` integer — entries per page, 1-100; default 50
 
 Verified output shape:
 
@@ -308,6 +328,8 @@ Show me what is in my Billing UI collection and flag any icons that do not fit t
 
 Status: Live
 
+Annotations: `readOnlyHint: false`, `destructiveHint: false` (non-destructive write).
+
 Purpose: Add catalog icons to an existing Icon Collection as plain entries.
 
 Typical use case: Extend a collection across sessions after reviewing new search results.
@@ -316,8 +338,8 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `collections
 
 Verified input fields:
 
-- `collectionId` integer, required
-- `iconIds` integer array, required, up to 200 per call
+- `collectionId` integer or numeric string, required — numeric ID of the collection
+- `iconIds` integer array, required — catalog icon IDs to add as plain entries; up to 200 per call, existing entries skipped
 
 Verified output shape:
 
@@ -334,6 +356,8 @@ Add the reviewed invoice, receipt, and refund icons to my Billing UI collection.
 
 Status: Live
 
+Annotations: `readOnlyHint: false`, `destructiveHint: true` (destructive write — clients may ask for confirmation).
+
 Purpose: Remove an icon from an Icon Collection.
 
 Typical use case: Curate a collection without a website round-trip.
@@ -342,9 +366,9 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `collections
 
 Verified input fields:
 
-- `collectionId` integer, required
-- `iconId` integer, required
-- `allVariants` boolean, default `false`
+- `collectionId` integer or numeric string, required — numeric ID of the collection
+- `iconId` integer, required — numeric ID of the catalog icon whose entry should be removed
+- `allVariants` boolean — default `false`: entry-precise, only the plain entry is removed and custom variants survive; `true` removes every entry of the icon, including custom variants
 
 Verified output shape:
 
@@ -363,6 +387,8 @@ Remove the duplicate settings icon from my Dashboard collection but keep the sty
 
 Status: Live
 
+Annotations: `readOnlyHint: false`, `destructiveHint: false` (non-destructive write).
+
 Purpose: Queue an Icon Collection export.
 
 Typical use case: Export a reviewed collection as SVG folders, sprites, manifests, framework components, PNG packs, Iconify JSON, Storybook galleries, or package scaffolds.
@@ -371,19 +397,19 @@ Authentication expectation: Requires a Pro token with `mcp:use` and `exports:cre
 
 Verified input fields:
 
-- `collectionId` integer or string, required
-- `formats` string array
-- `colorPolicy` string
-- `namingPolicy` string
-- `sizeProps` boolean
-- `typescript` boolean
-- `defaultSize` integer
-- `titleProp` boolean
-- `decorative` boolean
-- `componentSuffix` string
-- `packageName` string
-- `packageVersion` string
-- `png` object
+- `collectionId` integer or numeric string, required — numeric ID of the collection
+- `formats` string array — formats to build; `png` is shorthand for `png-pack`; defaults to the basic set: SVG folder, SVG sprite, JSON manifest, license manifest
+- `colorPolicy` string — `currentColor` rewrites fills, `preserve` keeps them, `strip` removes them; when omitted, collections carrying styling (applied style or custom icons) default to `preserve` and plain collections use the collection's stored policy (`currentColor` unless changed)
+- `namingPolicy` string — `kebab`, `pascal`, or `camel`; when omitted, uses the collection's stored policy (`kebab` unless changed)
+- `sizeProps` boolean — emit size props on framework components; default true
+- `typescript` boolean — emit TypeScript where the format supports it; default true
+- `defaultSize` integer — default component render size in pixels, 1-1024; default 24
+- `titleProp` boolean — include an accessible title prop on components; default true
+- `decorative` boolean — mark components decorative (aria-hidden) by default; default true
+- `componentSuffix` string — component name suffix, 1-32 letters or digits starting with a letter; default `Icon`
+- `packageName` string — npm package name for `npm-package` exports, lowercase, optionally scoped
+- `packageVersion` string — semver version for `npm-package` exports, such as 1.0.0; default 0.1.0
+- `png` object — PNG pack options: `sizes` (up to 6 allowed pixel values, default `[512]`), `densities` (1-3, default `[1]`), `backgroundType` and `backgroundColor`, `iconColorMode` and `iconColor`, `padding` 0-256 pixels (default 48)
 
 Verified format values include:
 
