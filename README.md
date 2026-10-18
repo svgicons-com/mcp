@@ -246,6 +246,12 @@ curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=com.svgicons
 
 Directories that ingest the official registry (such as PulseMCP) pick the listing up automatically.
 
+## Start with public metadata
+
+For a terminal introduction, follow the [CLI public metadata quick start](https://github.com/svgicons-com/cli#public-metadata-quick-start). CLI 0.1.0 was validated on Windows on 17 October 2026 for anonymous search, metadata inspection, family filtering and pagination. This validates that CLI path, not every MCP client or authenticated export.
+
+Search and metadata do not download raw SVG files. Moving from discovery to raw SVG, PNG or collection exports requires the Pro access and scopes described above. The [React filebar example](https://github.com/svgicons-com/svgicons-react-filebar) uses locally adapted Lucide components; it is not evidence of an authenticated Pro collection export.
+
 ## Example Agent Prompts
 
 1. "Find me a minimal lock icon that works at 16px and add it to my app's Icon Collection."
